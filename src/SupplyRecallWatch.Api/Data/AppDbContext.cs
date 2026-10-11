@@ -7,7 +7,7 @@ namespace SupplyRecallWatch.Api.Data;
 
 public class AppDbContext(DbContextOptions<AppDbContext> options) : DbContext(options)
 {
-    public DbSet<Item> Items => Set<Item>();
+    public DbSet<Item> Items => Set<Item>(); //represents the Items db table
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {
