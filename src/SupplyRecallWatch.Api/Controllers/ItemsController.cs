@@ -29,7 +29,19 @@ public class ItemsController(AppDbContext db) : ControllerBase
         item.Id = 0;
         item.CreatedUtc = DateTime.UtcNow;
         db.Items.Add(item);
-        await db.SaveChangesAsync();
+
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsDuplicateKey(ex))
+        {
+            return Problem(
+                title: "Duplicate SKU",
+                detail: $"An item with SKU '{item.Sku}' already exists.",
+                statusCode: StatusCodes.Status409Conflict);
+        }
+
         return CreatedAtAction(nameof(GetById), new { id = item.Id }, item);
     }
 
@@ -43,7 +55,17 @@ public class ItemsController(AppDbContext db) : ControllerBase
         item.Sku = update.Sku;
         item.Manufacturer = update.Manufacturer;
         item.Quantity = update.Quantity;
-        await db.SaveChangesAsync();
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateException ex) when (IsDuplicateKey(ex))
+        {
+            return Problem(
+                title: "Duplicate SKU",
+                detail: $"An item with SKU '{item.Sku}' already exists.",
+                statusCode: StatusCodes.Status409Conflict);
+        }
         return NoContent();
     }
 
@@ -69,4 +91,8 @@ public class ItemsController(AppDbContext db) : ControllerBase
         await db.SaveChangesAsync();
         return NoContent();
     }
+
+    //duplicate skus
+    private static bool IsDuplicateKey(DbUpdateException ex) =>
+    ex.InnerException is Microsoft.Data.SqlClient.SqlException { Number: 2601 or 2627 };
 }
